@@ -3,6 +3,8 @@ from src.utils.pdf_tools import get_first_page_as_image
 from PIL import ImageDraw
 import json
 import os
+import fitz
+from io import BytesIO
 
 
 def ShowBoundingBox(draw, box, width, height, boxColor):
@@ -31,12 +33,20 @@ class PDFAnalysisServices:
 
     def anotate_a_pdf(self, pdf_path: str):
         """
-        Annotate a PDF file using AWS Textract.
+        Annotate a PDF file using AWS Textract. Only annotate the first page.
         Args:
             pdf_path (str): The path to the PDF file to be annotated.
         """
-        with open(pdf_path, "rb") as pdf_file:
-            document_bytes = pdf_file.read()
+        doc = fitz.open(pdf_path)
+        try:
+            new_doc = fitz.open()
+            new_doc.insert_pdf(doc, from_page=0, to_page=0)
+            output = BytesIO()
+            new_doc.save(output)
+            document_bytes = output.getvalue()
+        finally:
+            doc.close()
+            new_doc.close()
         response = self.aws_client.analyze_doc(document_bytes)
 
         json_path = os.path.splitext(pdf_path)[0] + ".json"
