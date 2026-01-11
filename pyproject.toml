@@ -1,0 +1,14 @@
+[project]
+name = "aws-client-tests"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "boto3>=1.42.25",
+    "pillow>=12.1.0",
+    "pymupdf>=1.26.7",
+    "pytest>=9.0.2",
+    "pytest-mock>=3.15.1",
+    "python-dotenv>=1.2.1",
+]
