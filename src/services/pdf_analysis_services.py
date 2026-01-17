@@ -5,6 +5,7 @@ import json
 import os
 import fitz
 from io import BytesIO
+import io
 
 
 def ShowBoundingBox(draw, box, width, height, boxColor):
@@ -91,3 +92,17 @@ class PDFAnalysisServices:
         image.show()
         
 
+    def anotate_a_pdf_from_s3(self, bucket: str, document: str, save_local_path: str = None):
+        """
+        Annotate a PDF file from S3 using AWS Textract. Only annotate the first page.
+        Args:
+            bucket (str): The name of the S3 bucket.
+            document (str): The name of the PDF file in the S3 bucket.
+        """
+        stream = self.aws_client.get_file_from_s3(bucket, document)
+        stream = io.BytesIO(stream)
+        image_binary = stream.getvalue()
+        response = self.aws_client.analyze_doc(document_bytes=image_binary, feature_types=["TABLES", "FORMS"])
+        if save_local_path:
+            with open(save_local_path, "w", encoding="utf-8") as json_file:
+                json.dump(response, json_file, indent=2, ensure_ascii=False)
