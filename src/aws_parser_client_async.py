@@ -38,7 +38,9 @@ class AwsParserClientAsync:
         self.logger.info("Start Job Id: %s", response["JobId"])
 
         dotLine = 0
-        while jobFound == False:
+        max_attempts = 20
+        while jobFound == False and max_attempts > 0:
+            max_attempts -= 1
             sqsResponse = self.sqs.receive_message(
                 QueueUrl=self.sqsQueueUrl,
                 MessageAttributeNames=["ALL"],
@@ -46,7 +48,6 @@ class AwsParserClientAsync:
             )
 
             if sqsResponse:
-
                 if "Messages" not in sqsResponse:
                     if dotLine < 40:
                         print(".", end="")
@@ -83,8 +84,11 @@ class AwsParserClientAsync:
                         QueueUrl=self.sqsQueueUrl,
                         ReceiptHandle=message["ReceiptHandle"],
                     )
-
-        self.logger.info("Done!")
+        if max_attempts == 0:
+            self.logger.warning("Max attempts reached. Job not found. Still attempts to acquire the job.")
+            self.GetResults(response["JobId"], save_local_path)
+        else:
+            self.logger.info("Done!")
 
     def CreateTopicandQueue(self):
         """
@@ -210,8 +214,8 @@ class AwsParserClientAsync:
 
             self.logger.info(json.dumps(response, indent=2))
             # Save to local.
-            if self.save_local_path is not None:
-                with open(self.save_local_path, "w", encoding="utf-8") as json_file:
+            if save_local_path is not None:
+                with open(save_local_path, "w", encoding="utf-8") as json_file:
                     json.dump(response, json_file, indent=2, ensure_ascii=False)
 
             blocks = response["Blocks"]
