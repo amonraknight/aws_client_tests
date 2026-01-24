@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import List, Optional, Dict
 
 """
@@ -11,9 +11,17 @@ class BoundingBox(BaseModel):
     Left: float
     Top: float
 
+    @field_serializer('Width', 'Height', 'Left', 'Top')
+    def serialize_float_to_3_decimal(self, value: float) -> float:
+        return round(value, 3)
+
 class Point(BaseModel):
     X: float
     Y: float
+
+    @field_serializer('X', 'Y')
+    def serialize_float_to_3_decimal(self, value: float) -> float:
+        return round(value, 3)
 
 class Geometry(BaseModel):
     BoundingBox: BoundingBox
@@ -37,6 +45,12 @@ class Block(BaseModel):
     Relationships: Optional[List[Relationship]] = None
     Page: Optional[int] = 1
 
+    @field_serializer('Confidence')
+    def serialize_confidence_to_3_decimal(self, value: Optional[float]) -> Optional[float]:
+        if value is not None:
+            return round(value, 3)
+        return None
+
 
 class DocumentMetadata(BaseModel):
     Pages: int
@@ -47,7 +61,7 @@ class ResponseMetadata(BaseModel):
     HTTPHeaders: Optional[Dict[str, str]] = {}
     RetryAttempts: Optional[int] = None
 
-class Textract_Response(BaseModel):
+class TextractResponse(BaseModel):
     DocumentMetadata: DocumentMetadata
     JobStatus: Optional[str] = None
     Blocks: List[Block] = []
