@@ -11,8 +11,9 @@ from src.parsers.textract_response_parser import (
 class test_textract_response_parser(unittest.TestCase):
 
     def test_parse_textract_response(self):
+        source_json = "E:\\development\\GitRepository\\notes\\markdown_notes\\resources\\virtual hospital bill 1 JS.json"
         with open(
-            "E:\\development\\GitRepository\\notes\\markdown_notes\\resources\\textract_output_sample_invoice_sample_3 Project Customer Invoice.json",
+            source_json,
             "r",
             encoding="utf-8",
         ) as json_file:
@@ -21,7 +22,16 @@ class test_textract_response_parser(unittest.TestCase):
         textract_response: BaseModel = parse_textract_response(response)
         # transform
         document = transform_model_to_tree(textract_response)
-        print(document.model_dump_json())
+
+        target_json = source_json.replace(".json", "_tree.json")
+
+        with open(
+            target_json,
+            "w",
+            encoding="utf-8",
+        ) as json_file:
+            json.dump(document.model_dump(), json_file, ensure_ascii=False, indent=2)
+
 
 
 if __name__ == "__main__":

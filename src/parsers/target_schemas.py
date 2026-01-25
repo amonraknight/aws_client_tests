@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import List, Optional, Union
 from src.parsers.textract_schemas import Geometry
 
@@ -25,6 +25,10 @@ class StructuredTable(GeneralItem):
     Content: List[List[str]] = []
     TableTitle: Optional[TableTitle] = None
     TableFooter: Optional[TableFooter] = None
+
+    @field_serializer('Content')
+    def serialize_content_limit_3(self, value: List[List[str]]) -> List[List[str]]:
+        return value[:3] if value else []
 
 
 class KeyOfKVSet(GeneralItem):
