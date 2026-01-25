@@ -1,3 +1,4 @@
+from pydoc import text
 from src.parsers.textract_schemas import *
 from src.parsers.target_schemas import *
 
@@ -100,8 +101,16 @@ def _transform_table_block(
         elif each_relationship.Type == "CHILD":
             cell_id_list.extend(each_relationship.Ids)
 
-    table.TableTitle = _collect_words_from_blocks(title_id_list, block_dict)
-    table.TableFooter = _collect_words_from_blocks(footer_id_list, block_dict)
+    if len(title_id_list) > 0:
+        table.TableTitle = TableTitle(
+            Geometry=block_dict[title_id_list[0]].Geometry,
+            Text=_collect_words_from_blocks(title_id_list, block_dict),
+        )
+    if len(footer_id_list) > 0:
+        table.TableFooter = TableFooter(
+            Geometry=block_dict[footer_id_list[0]].Geometry,
+            Text=_collect_words_from_blocks(footer_id_list, block_dict),
+        )
 
     # Cells
     table.Content = _allocate_table_cells(cell_id_list, block_dict)
@@ -109,9 +118,7 @@ def _transform_table_block(
     return table
 
 
-def _collect_words_from_blocks(
-    ids: List[str], block_dict: dict[str, Block]
-) -> List[str]:
+def _collect_words_from_blocks(ids: List[str], block_dict: dict[str, Block]) -> str:
     # 为table title、footer、cell block收集文字
     words = []
     for each_id in ids:
@@ -166,7 +173,6 @@ def _allocate_table_cells(
     # 初始化表格
     rows = [[""] * (max_row_idx) for _ in range(max_column_idx)]
 
-    
     for each_cell in cell_bocks:
         if each_cell.Relationships:
             children_ids = []
@@ -175,8 +181,8 @@ def _allocate_table_cells(
                     children_ids.extend(each_relationship.Ids)
                     break
 
-            rows[each_cell.RowIndex - 1][each_cell.ColumnIndex - 1] = _collect_words_from_blocks(
-                children_ids, block_dict
+            rows[each_cell.RowIndex - 1][each_cell.ColumnIndex - 1] = (
+                _collect_words_from_blocks(children_ids, block_dict)
             )
 
     return rows
