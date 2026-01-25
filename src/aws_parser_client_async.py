@@ -7,18 +7,18 @@ import logging
 
 
 class AwsParserClientAsync:
-    def __init__(self, role, bucket, document):
+    def __init__(self, role, bucket):
         load_dotenv()
         self.logger = logging.getLogger(__name__)
         self.roleArn = role
         self.bucket = bucket
-        self.document = document
         self.textract = boto3.client("textract")
         self.sqs = boto3.client("sqs")
         self.sns = boto3.client("sns")
 
     def ProcessDocument(
         self,
+        document_in_s3: str,
         save_local_path: str = None,
         feature_types: list[str] = ["TABLES", "FORMS"],
     ):
@@ -27,7 +27,7 @@ class AwsParserClientAsync:
         # select which features you want to obtain with the FeatureTypes argument
         response = self.textract.start_document_analysis(
             DocumentLocation={
-                "S3Object": {"Bucket": self.bucket, "Name": self.document}
+                "S3Object": {"Bucket": self.bucket, "Name": document_in_s3}
             },
             FeatureTypes=feature_types,
             NotificationChannel={
