@@ -57,12 +57,5 @@ class Page(BaseModel):
     PageIdx: int
     Items: Optional[List[Union[IndependentLine, StructuredTable, KeyValueSet]]] = []
 
-    @field_serializer('Items')
-    def serialize_items(self, value: Optional[List[Union[IndependentLine, StructuredTable, KeyValueSet]]]) -> Any:
-        if value is None:
-            return []
-        return [item.model_dump() if hasattr(item, 'model_dump') else item for item in value]
-
-
 class Document(BaseModel):
     Pages: Optional[List[Page]] = []
