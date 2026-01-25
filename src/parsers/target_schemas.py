@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_serializer
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Any
+from pydantic.json_schema import to_jsonable_python
 from src.parsers.textract_schemas import Geometry
 
 
@@ -30,6 +31,12 @@ class StructuredTable(GeneralItem):
     def serialize_content_limit_3(self, value: List[List[str]]) -> List[List[str]]:
         return value[:3] if value else []
 
+    @field_serializer('TableTitle', 'TableFooter')
+    def serialize_optional_fields(self, value: Optional[Union[TableTitle, TableFooter]]) -> Any:
+        if value is None:
+            return None
+        return value.model_dump()
+
 
 class KeyOfKVSet(GeneralItem):
     Text: Optional[str] = None
@@ -49,6 +56,12 @@ class KeyValueSet(BaseModel):
 class Page(BaseModel):
     PageIdx: int
     Items: Optional[List[Union[IndependentLine, StructuredTable, KeyValueSet]]] = []
+
+    @field_serializer('Items')
+    def serialize_items(self, value: Optional[List[Union[IndependentLine, StructuredTable, KeyValueSet]]]) -> Any:
+        if value is None:
+            return []
+        return [item.model_dump() if hasattr(item, 'model_dump') else item for item in value]
 
 
 class Document(BaseModel):
